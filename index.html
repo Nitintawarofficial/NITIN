@@ -11,7 +11,7 @@ button,input{font:inherit}button{cursor:pointer;border:0}.app{max-width:1100px;m
 <body>
 <div class="app">
 <header class="top"><div class="logo">♫</div><div class="brand">Nitin Music</div><div class="search">⌕<input id="search" placeholder="What do you want to play?" autocomplete="off"></div></header>
-<section class="hero"><div class="eyebrow">YOUR MUSIC SPACE</div><h1>Music for every moment.</h1><p>Search songs, discover artists and play previews instantly.</p></section>
+<section class="hero"><div class="eyebrow">YOUR MUSIC SPACE</div><h1>Music for every moment.</h1><p>Search open music, discover artists and play full-length tracks.</p></section>
 <section class="section"><h2>Browse</h2><div class="chips" id="chips"></div></section>
 <section class="section"><h2 id="heading">Popular right now</h2><div class="grid" id="grid"></div></section>
 </div>
@@ -22,16 +22,16 @@ const genres=['All','Bollywood','Pop','Hip-Hop','Punjabi','Romantic','English'];
 let songs=[],index=-1;
 const grid=document.getElementById('grid'),audio=document.getElementById('audio'),search=document.getElementById('search');
 function chips(){document.getElementById('chips').innerHTML=genres.map((g,i)=>'<button class="chip '+(!i?'active':'')+'" onclick="genre(\''+g+'\',this)">'+g+'</button>').join('')}
-async function load(term='bollywood'){grid.innerHTML='<div class="empty">Loading music…</div>';try{const r=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(term)+'&media=music&entity=song&limit=24');const d=await r.json();songs=d.results.filter(x=>x.previewUrl);render(songs);document.getElementById('heading').textContent=term==='bollywood'?'Popular right now':'Results for “'+term+'”'}catch(e){grid.innerHTML='<div class="empty">Could not load songs. Try again.</div>'}}
-function render(list){grid.innerHTML=list.length?list.map((s,i)=>'<article class="card"><img class="cover" loading="lazy" src="'+s.artworkUrl100.replace('100x100','600x600')+'" alt=""><div class="title">'+esc(s.trackName)+'</div><div class="artist">'+esc(s.artistName)+'</div><button class="play" onclick="play('+i+')">▶</button></article>').join(''):'<div class="empty">No songs found.</div>'}
+async function load(term='trending'){grid.innerHTML='<div class="empty">Loading open music…</div>';try{const url=term==='trending'?'https://api.audius.co/v1/tracks/trending?limit=24':'https://api.audius.co/v1/tracks/search?query='+encodeURIComponent(term)+'&limit=24';const r=await fetch(url);const d=await r.json();songs=(d.data||[]).filter(x=>x.isStreamable!=='false');render(songs);document.getElementById('heading').textContent=term==='trending'?'Trending on Audius':'Results for “'+term+'”'}catch(e){grid.innerHTML='<div class="empty">Could not load music. Try again.</div>'}}
+function render(list){grid.innerHTML=list.length?list.map((s,i)=>'<article class="card"><img class="cover" loading="lazy" src="'+(s.artwork&&s.artwork._480x480)||''.replace('100x100','600x600')+'" alt=""><div class="title">'+esc(s.title)+'</div><div class="artist">'+esc(s.user&&s.user.name||'Unknown artist')+'</div><button class="play" onclick="play('+i+')">▶</button></article>').join(''):'<div class="empty">No songs found.</div>'}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function play(i){index=i;const s=songs[i];audio.src=s.previewUrl;document.getElementById('mini').src=s.artworkUrl100;document.getElementById('ptitle').textContent=s.trackName;document.getElementById('partist').textContent=s.artistName;audio.play();document.getElementById('play').textContent='Ⅱ'}
+function play(i){index=i;const s=songs[i];audio.src='https://api.audius.co/v1/tracks/'+s.id+'/stream';document.getElementById('mini').src=(s.artwork&&s.artwork._480x480)||'';document.getElementById('ptitle').textContent=s.trackName;document.getElementById('partist').textContent=s.artistName;audio.play();document.getElementById('play').textContent='Ⅱ'}
 function toggle(){if(index<0){play(0);return}audio.paused?(audio.play(),document.getElementById('play').textContent='Ⅱ'):(audio.pause(),document.getElementById('play').textContent='▶')}
 function next(){if(!songs.length)return;play((index+1)%songs.length)} function prev(){if(!songs.length)return;play((index-1+songs.length)%songs.length)}
-function genre(g,el){document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));el.classList.add('active');load(g==='All'?'bollywood':g.toLowerCase())}
+function genre(g,el){document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));el.classList.add('active');load(g==='All'?'trending':g.toLowerCase())}
 let timer;search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>{const q=search.value.trim();if(q)load(q);else load()},450)});
 audio.addEventListener('ended',next);audio.addEventListener('timeupdate',()=>{const p=document.getElementById('progress');p.value=audio.duration?(audio.currentTime/audio.duration)*100:0;document.getElementById('cur').textContent=fmt(audio.currentTime);document.getElementById('dur').textContent=fmt(audio.duration)});
 document.getElementById('progress').addEventListener('input',e=>{if(audio.duration)audio.currentTime=(e.target.value/100)*audio.duration});
 function fmt(n){if(!isFinite(n))return'0:00';return Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0')}
-chips();load();
+chips();load('trending');
 </script></body></html>
