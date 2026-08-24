@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nitin Music</title>
+<style>
+:root{--bg:#070707;--panel:#121212;--muted:#a7a7a7;--text:#fff;--accent:#1ed760}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#171717 0,#080808 430px);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+button,input{font:inherit}button{cursor:pointer;border:0}.app{max-width:1100px;margin:auto;padding:18px 18px 125px}.top{display:flex;align-items:center;gap:12px;margin-bottom:18px}.logo{width:42px;height:42px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#000;font-size:23px;font-weight:900}.brand{font-weight:800;font-size:20px}.search{display:flex;align-items:center;background:#242424;border-radius:28px;padding:0 16px;gap:10px;flex:1;max-width:620px;margin-left:auto}.search input{width:100%;padding:13px 0;background:transparent;color:#fff;border:0;outline:0}.hero{padding:22px 4px 28px}.eyebrow{color:var(--accent);font-size:13px;font-weight:800;letter-spacing:.12em}.hero h1{font-size:clamp(30px,7vw,54px);margin:8px 0}.hero p{color:var(--muted);margin:0;max-width:560px}.section{margin-top:18px}.section h2{font-size:21px;margin:0 0 14px}.chips{display:flex;gap:8px;overflow:auto;padding-bottom:5px}.chip{background:#262626;color:#fff;padding:9px 15px;border-radius:22px;white-space:nowrap}.chip.active{background:#fff;color:#000}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:18px}.card{background:rgba(255,255,255,.035);padding:12px;border-radius:9px;transition:.2s}.card:hover{background:#202020;transform:translateY(-2px)}.cover{width:100%;aspect-ratio:1;border-radius:7px;object-fit:cover;background:#222}.title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:10px}.artist{color:var(--muted);font-size:13px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.play{width:42px;height:42px;border-radius:50%;background:var(--accent);color:#000;font-weight:900;float:right;margin-top:-48px;position:relative}.empty{color:var(--muted);padding:35px 0}.player{position:fixed;left:0;right:0;bottom:0;background:rgba(18,18,18,.97);backdrop-filter:blur(16px);border-top:1px solid #2a2a2a;padding:10px max(18px,calc((100% - 1100px)/2));z-index:10}.playerrow{display:flex;align-items:center;gap:12px}.mini{width:48px;height:48px;border-radius:5px;object-fit:cover;background:#222}.meta{min-width:0;flex:1}.meta .title{margin:0}.controls{display:flex;align-items:center;gap:10px}.ctrl{background:transparent;color:#fff;font-size:20px;width:38px;height:38px}.mainplay{background:#fff;color:#000;border-radius:50%;font-size:16px}.progress{width:100%;height:3px;margin-top:8px;accent-color:var(--accent)}.time{display:flex;justify-content:space-between;color:#888;font-size:10px;margin-top:2px}@media(max-width:600px){.app{padding:14px 14px 120px}.top{flex-wrap:wrap}.search{order:3;max-width:none;flex-basis:100%;margin:0}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{padding:9px}.controls .optional{display:none}.player{padding:9px 12px}.meta{max-width:42%}.hero{padding-top:10px}}
+</style></head>
+<body>
+<div class="app">
+<header class="top"><div class="logo">♫</div><div class="brand">Nitin Music</div><div class="search">⌕<input id="search" placeholder="What do you want to play?" autocomplete="off"></div></header>
+<section class="hero"><div class="eyebrow">YOUR MUSIC SPACE</div><h1>Music for every moment.</h1><p>Search songs, discover artists and play previews instantly.</p></section>
+<section class="section"><h2>Browse</h2><div class="chips" id="chips"></div></section>
+<section class="section"><h2 id="heading">Popular right now</h2><div class="grid" id="grid"></div></section>
+</div>
+<div class="player"><div class="playerrow"><img id="mini" class="mini" src="" alt=""><div class="meta"><div id="ptitle" class="title">Choose a song</div><div id="partist" class="artist">Nitin Music</div></div><div class="controls"><button class="ctrl optional" onclick="prev()">↶</button><button id="play" class="ctrl mainplay" onclick="toggle()">▶</button><button class="ctrl optional" onclick="next()">↷</button></div></div><input id="progress" class="progress" type="range" min="0" max="100" value="0"><div class="time"><span id="cur">0:00</span><span id="dur">0:00</span></div></div>
+<audio id="audio"></audio>
+<script>
+const genres=['All','Bollywood','Pop','Hip-Hop','Punjabi','Romantic','English'];
+let songs=[],index=-1;
+const grid=document.getElementById('grid'),audio=document.getElementById('audio'),search=document.getElementById('search');
+function chips(){document.getElementById('chips').innerHTML=genres.map((g,i)=>'<button class="chip '+(!i?'active':'')+'" onclick="genre(\''+g+'\',this)">'+g+'</button>').join('')}
+async function load(term='bollywood'){grid.innerHTML='<div class="empty">Loading music…</div>';try{const r=await fetch('https://itunes.apple.com/search?term='+encodeURIComponent(term)+'&media=music&entity=song&limit=24');const d=await r.json();songs=d.results.filter(x=>x.previewUrl);render(songs);document.getElementById('heading').textContent=term==='bollywood'?'Popular right now':'Results for “'+term+'”'}catch(e){grid.innerHTML='<div class="empty">Could not load songs. Try again.</div>'}}
+function render(list){grid.innerHTML=list.length?list.map((s,i)=>'<article class="card"><img class="cover" loading="lazy" src="'+s.artworkUrl100.replace('100x100','600x600')+'" alt=""><div class="title">'+esc(s.trackName)+'</div><div class="artist">'+esc(s.artistName)+'</div><button class="play" onclick="play('+i+')">▶</button></article>').join(''):'<div class="empty">No songs found.</div>'}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function play(i){index=i;const s=songs[i];audio.src=s.previewUrl;document.getElementById('mini').src=s.artworkUrl100;document.getElementById('ptitle').textContent=s.trackName;document.getElementById('partist').textContent=s.artistName;audio.play();document.getElementById('play').textContent='Ⅱ'}
+function toggle(){if(index<0){play(0);return}audio.paused?(audio.play(),document.getElementById('play').textContent='Ⅱ'):(audio.pause(),document.getElementById('play').textContent='▶')}
+function next(){if(!songs.length)return;play((index+1)%songs.length)} function prev(){if(!songs.length)return;play((index-1+songs.length)%songs.length)}
+function genre(g,el){document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));el.classList.add('active');load(g==='All'?'bollywood':g.toLowerCase())}
+let timer;search.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>{const q=search.value.trim();if(q)load(q);else load()},450)});
+audio.addEventListener('ended',next);audio.addEventListener('timeupdate',()=>{const p=document.getElementById('progress');p.value=audio.duration?(audio.currentTime/audio.duration)*100:0;document.getElementById('cur').textContent=fmt(audio.currentTime);document.getElementById('dur').textContent=fmt(audio.duration)});
+document.getElementById('progress').addEventListener('input',e=>{if(audio.duration)audio.currentTime=(e.target.value/100)*audio.duration});
+function fmt(n){if(!isFinite(n))return'0:00';return Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0')}
+chips();load();
+</script></body></html>
